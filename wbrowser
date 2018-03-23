@@ -1,0 +1,35 @@
+#! /usr/local/bin/ruby
+
+require 'tk'
+require 'url-parse'
+require 'http-access'
+require 'html-parser'
+require 'formatter'
+
+text = TkText.new
+bar = TkScrollbar.new(nil, 'orient'=>'vertical')
+bar.command proc {|idx| text.yview(*idx)}
+text.configure 'yscroll', proc {|idx| bar.set(*idx)}
+text.pack 'side'=>'left'
+bar.pack 'side'=>'right', 'fill'=>'y'
+
+class << text
+  def write(data)
+    insert 'insert', data
+  end
+end
+
+w = DumbWriter.new(text)
+f = AbstractFormatter.new(w)
+p = HTMLParser.new(f)
+
+urlstr = ARGV.shift
+url = URL.new(urlstr)
+h = HTTPAccess.new(url.netloc)
+h.request_get(url.path, 'User-Agent'=>"wbrowser/ruby#{VERSION}")
+h.get_response
+Thread.start {
+  h.get_data {|data| p.feed data}
+}
+
+Tk.mainloop

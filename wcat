@@ -1,0 +1,11 @@
+#! /usr/local/bin/ruby
+
+require 'url-parse'
+require 'http-access'
+
+while urlstr = ARGV.shift
+  url = URL.new(urlstr)
+  h = HTTPAccess.new(url.netloc)
+  h.request_get(url.path)
+  h.get_data(4096) {|data| print data}
+end
